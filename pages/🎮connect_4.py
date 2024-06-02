@@ -163,18 +163,17 @@ st.write(st.session_state.connect4["game_hist"])
 
 if end_status is not None:
 
-    if end_status == "user wins":
-        st.success("You won against the bot🏆")
+    if end_status == "game over":
+        st.error("You lost against the bot 💩")
+
+    if end_status == "quit":
+        st.warning("You resigned 🎈")
 
     if end_status == "draw":
         st.info("It's a draw 🤝")
 
-    if end_status == "quit":
-        st.warning("You resigned 💊")
-
-    if end_status == "game over":
-        st.error("You lost against the bot ☢️")
-    
+    if end_status == "user wins":
+        st.success("You won against the bot 🏆")    
     
 
 st.write(st.session_state.connect4)

@@ -34,7 +34,7 @@ st.markdown(
 )
 
 # sidebar
-# in the sidebar all the games are automatically displayed
+# in the sidebar all the games are displayed here
 with st.sidebar:
 
     my_page_ = st.button("Personal page 🧑‍💻")

@@ -21,6 +21,7 @@ if "chomp" not in st.session_state:
     }
 
 
+# define game column
 chomp_col = {
     2: 0.143,
     3: 0.24,

@@ -212,8 +212,8 @@ def run_simulation():
             user_sigma  = st.session_state.kuhn_simulation[get_sigma_key()],
             n_rounds    = st.session_state.kuhn_simulation["n_rounds"]
         )
-
     else:
+
         # simulate with unfreezed bot and store ne
         rewards, bot_ne = simulate(
             bot_type    = st.session_state.kuhn_simulation["bot"],

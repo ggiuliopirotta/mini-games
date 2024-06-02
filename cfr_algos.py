@@ -44,6 +44,7 @@ class CFR:
             
                 ne[info_set] = dict()
                 for i, a in enumerate(self.sigma[info_set]):
+
                     # update ne at info set
                     # if any of the regrets is positive, each action probability is proportional to the regret
                     # otherwise, a uniform strategy is returned
@@ -150,6 +151,7 @@ class CFRPlus(CFR):
 
         if node.is_root():
             for a in node.actions:
+                
                 # accumulate utilities for each child
                 # both realization probabilities are still 1 cause neither of the players moved
                 u_tot += self.compute_u(node.play(a), p, p_cfr)
@@ -161,8 +163,8 @@ class CFRPlus(CFR):
         elif node.is_terminal():
             return node.eval()
         else:
-
             for a in node.actions:
+
                 # get new realization probabilities wrt player 1
                 # fix probability for player 2 cause once the information set is reached, where to go only depends on player 1
                 p_child     = p*(self.sigma[info_set][a] if node.player == 1 else 1)
@@ -176,6 +178,7 @@ class CFRPlus(CFR):
         p, p_cfr = (p, p_cfr) if node.player == 1 else (p_cfr, p)
 
         for a in node.actions:
+
             # discount regret by counterfactual probability
             # fix probability for player 1 cause the regret is computed wrt pure actions
             r = p_cfr*(u_actions[a]-u_tot)*(1 if node.player == 1 else -1)
@@ -206,6 +209,7 @@ class CsCFR(CFR):
         u_tot       = 0
 
         if node.is_root():
+
             # difference wrt VanillaCFR
             # sample a possible dealing and run the algorithm there instead of evaluating all possible outcomes
             return self.compute_u(node.deal_cards())
@@ -214,8 +218,8 @@ class CsCFR(CFR):
         elif node.is_terminal():
             return node.eval()
         else:
-
             for a in node.actions:
+
                 # get new realization probabilities wrt player 1
                 # fix probability for player 2 cause once the information set is reached, where to go only depends on player 1
                 p_child     = p*(self.sigma[info_set][a] if node.player == 1 else 1)
@@ -229,6 +233,7 @@ class CsCFR(CFR):
         p, p_cfr = (p, p_cfr) if node.player == 1 else (p_cfr, p)
 
         for a in node.actions:
+
             # discount regret by counterfactual probability
             # fix probability for player 1 cause the regret is computed wrt pure actions
             r = p_cfr*(u_actions[a]-u_tot)*(1 if node.player == 1 else -1)
@@ -292,9 +297,9 @@ class CFRBot:
                         self.user_sigma[info_set] if info_set in self.user_sigma else dict()
                     )
                 else:
-
                     # store bot sigma at a bot node
                     for i, a in enumerate(self.sigma[info_set]):
+
                         # update ne at info set
                         # if any of the regrets is positive, each action probability is proportional to the regret
                         # otherwise, a uniform strategy is returned
@@ -321,16 +326,17 @@ class CFRBot:
 
         # recursive function
         def init_map_rec(node, fill):
-            info_set = node.info_set
 
+            info_set = node.info_set
             if info_set in self.user_sigma:
+
                 # initialize user node-action map at a user information set
                 # fill with user sigma if it's a map for the strategy and with 0 otherwise
                 mapping[info_set] = {
                     a: (self.user_sigma[info_set][a] if fill == "prob" else 0.) for a in node.actions
                 }
-            
             else:
+            
                 # initialize bot node-action map at a bot information set
                 # fill with uniform distribution if it's a map for the strategy and with 0 otherwise
                 mapping[info_set] = {
@@ -447,6 +453,7 @@ class CFRPlusBot(CFRBot):
 
         if node.is_root():
             for a in node.actions:
+
                 # accumulate utilities for each child
                 # both realization probabilities are still 1 cause neither of the players moved
                 u_tot += self.compute_u(node.play(a), p, p_cfr)
@@ -458,8 +465,8 @@ class CFRPlusBot(CFRBot):
         elif node.is_terminal():
             return node.eval()
         else:
-
             for a in node.actions:
+
                 # get new realization probabilities wrt player 1
                 # fix probability for player 2 cause once the information set is reached, where to go only depends on player 1
                 p_child     = p*(self.sigma[info_set][a] if node.player == 1 else 1)
@@ -473,6 +480,7 @@ class CFRPlusBot(CFRBot):
         p, p_cfr = (p, p_cfr) if node.player == 1 else (p_cfr, p)
 
         for a in node.actions:
+
             # discount regret by counterfactual probability
             # fix probability for player 1 cause the regret is computed wrt pure actions
             r = p_cfr*(u_actions[a]-u_tot)*(1 if node.player == 1 else -1)
@@ -503,6 +511,7 @@ class CsCFRBot(CFRBot):
         u_tot       = 0
 
         if node.is_root():
+
             # difference wrt VanillaCFR
             # sample a possible dealing and run the algorithm there instead of evaluating all possible outcomes
             return self.compute_u(node.deal_cards())
@@ -511,8 +520,8 @@ class CsCFRBot(CFRBot):
         elif node.is_terminal():
             return node.eval()
         else:
-
             for a in node.actions:
+
                 # get new realization probabilities wrt player 1
                 # fix probability for player 2 cause once the information set is reached, where to go only depends on player 1
                 p_child     = p*(self.sigma[info_set][a] if node.player == 1 else 1)
@@ -526,6 +535,7 @@ class CsCFRBot(CFRBot):
         p, p_cfr = (p, p_cfr) if node.player == 1 else (p_cfr, p)
 
         for a in node.actions:
+
             # discount regret by counterfactual probability
             # fix probability for player 1 cause the regret is computed wrt pure actions
             r = p_cfr*(u_actions[a]-u_tot)*(1 if node.player == 1 else -1)

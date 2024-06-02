@@ -154,10 +154,10 @@ st.write(st.session_state.chomp["game_hist"])
 if end_status is not None:
 
     if end_status == "game over":
-        st.error("You bit the poisoned chocolate ☢️")
+        st.error("You bit the poisoned chocolate 💀")
     
     if end_status == "quit":
-        st.warning("You resigned 💊")
+        st.warning("You resigned 🎈")
     
     if end_status == "user wins":
-        st.success("You won against the bot🏆")
+        st.success("You won against the bot 🏆")

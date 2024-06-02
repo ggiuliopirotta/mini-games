@@ -4,10 +4,13 @@ import  streamlit as st
 import  pickle
 
 
+### ---------------------------------------------------------------------------------------------------- ###
+### INITIALIZE SESSION STATE
+
+
 if "connect4" not in st.session_state:
 
     st.session_state["connect4"] = {
-        "bot"           : "minimizer",
         "bot_sigma"     : dict(),
         "end_game"      : None,
         "n_rows"        : 2,
@@ -19,6 +22,7 @@ if "connect4" not in st.session_state:
     }
 
 
+# define game column
 connect4_col = {
     2: 0.143,
     3: 0.24,
@@ -29,17 +33,23 @@ connect4_col = {
 }
 
 
+### ---------------------------------------------------------------------------------------------------- ###
+### STATE FUNCTIONS
+
+
 def set_connect4_state(key, val):
     st.session_state.connect4[key] = st.session_state[val]
     
+    # reset board if height or width are changed and instantiate new root
     if key == "n_rows" or key == "n_cols":
         st.session_state.connect4["game_state"] = Connect4State(
             n_rows = st.session_state.connect4["n_rows"],
             n_cols = st.session_state.connect4["n_cols"],
         )
-    
-    if key == "user":
-        st.session_state.connect4["bot"] = "maximizer" if st.session_state[val] == "2" else "minimizer"
+
+
+### ---------------------------------------------------------------------------------------------------- ###
+### GAME FUNCTIONS
 
 
 def move(*col):
