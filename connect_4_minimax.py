@@ -297,8 +297,8 @@ n_cols  = 6
 
 root    = Connect4State(n_rows, n_cols)
 
-# _, _, memo = negamax(root, 5, True)
-# print(memo)
+_, _, memo = negamax(root, 5, True)
+print(memo)
 
 # with open(f"assets/connect 4/solution_{n_rows}x{n_cols}.pkl", "wb") as f:
 #     pickle.dump(memo, f)

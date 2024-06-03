@@ -76,6 +76,7 @@ def play():
 
 def move(x, y):
 
+    # get current state
     state = st.session_state.chomp["game_state"]
 
     # if top-left cell is bitten, then terminate game with a lose
