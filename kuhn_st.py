@@ -1,17 +1,17 @@
-from    kuhn_fun import *
-from    kuhn_game import RootNode, DEALINGS
-import  streamlit as st
+from kuhn_fun import *
+from kuhn_game import RootNode, DEALINGS
+import streamlit as st
 
 
-### ---------------------------------------------------------------------------------------------------- ###
-### INITIALIZE SESSION STATE
+### -------------------------------------------------- ###
+### --- SESSION STATE -------------------------------- ###
 
 
 def init_state():
     if "kuhn" not in st.session_state:
 
-        st.session_state["kuhn_game"]       = {
-            "bot"       : "CFR +",
+        st.session_state["kuhn_game"] = {
+            "bot"       : "CFRPlus",
             "bot_exp"   : 10,
             "bot_sigma" : dict(),
             "hist"      : [],
@@ -22,7 +22,7 @@ def init_state():
         }
 
         st.session_state["kuhn_simulation"] = {
-            "bot"           : "CFR +",
+            "bot"           : "CFRPlus",
             "bot_freeze"    : False,
             "bot_ne"        : dict(),
             "n_rounds"      : 100,
@@ -32,39 +32,38 @@ def init_state():
             "user2_sigma"   : dict(),
         }
 
-        st.session_state["kuhn"]            = True
+        st.session_state["kuhn"] = True
 
 
-### ---------------------------------------------------------------------------------------------------- ###
-### STATE FUNCTIONS
+### -------------------------------------------------- ###
+### --- STATE FUNCTIONS ------------------------------ ###
 
 
 def get_sigma_key():
-    # get key for current user position
-    return "user1_sigma" if st.session_state.kuhn_simulation["user"] == 1 else "user2_sigma"
+
+    idx = 1 if st.session_state.kuhn_simulation["user"] == 1 else 2
+    return "user" + str(idx) + "_sigma"
 
 
 def map_bot_idx(bot_type):
 
-    # map bot type to index for streamlit selectbox
     d = {
-        "CFR +"                 : 0,
-        "Chance Sampling CFR"   : 1
+        "CFRPlus"   : 0,
+        "CsCFR"     : 1,
     }
-
     return d[bot_type]
 
 
 def set_all_info_sets():
-    set_kuhn_state("simulation", "user", "simulation_user_")
 
-    # get key and info sets for the user position
+    set_kuhn_state("simulation", "user", "simulation_user_")
+    # Get key and info sets for the user position
     sigma_key       = get_sigma_key()
     all_info_sets   = get_all_info_sets(st.session_state.simulation_user_)
 
     if not bool(st.session_state.kuhn_simulation[sigma_key]):
         for info_set in all_info_sets:
-            # initialize user sigma for all info sets
+            # Initialize user sigma for all info sets
             st.session_state.kuhn_simulation[sigma_key][info_set] = {
                 "BET"   : 0.5,
                 "PASS"  : 0.5
@@ -73,97 +72,97 @@ def set_all_info_sets():
 
 def set_bot():
 
-    # initialize and train bot
+    # Initialize and train bot
     bot = train_bot(
         st.session_state.kuhn_game["bot"],
         st.session_state.kuhn_game["bot_exp"]
     )
-    # compute and store ne
+    # Compute the e
     st.session_state.kuhn_game["bot_sigma"] = bot.compute_ne()
 
 
 def set_kuhn_state(partition, key, val):
-    st.session_state["kuhn_" + partition][key] = st.session_state[val]
     
-    # reset bot sigma if bot type is switched to force re-training
+    st.session_state["kuhn_" + partition][key] = st.session_state[val]
+    # Reset bot sigma if bot type is switched to force re-training
     if partition == "game" and key == "bot":
         st.session_state.kuhn_game["bot_sigma"] = dict()
 
 
 def set_user_sigma():
 
-    info_set    = st.session_state.info_set_
-    p           = st.session_state.bet_prob_
+    info_set = st.session_state.info_set_
+    p = st.session_state.bet_prob_
 
-    # set action probabilities for the selected info set
-    st.session_state.kuhn_simulation[get_sigma_key()][info_set]["BET"]    = p
-    st.session_state.kuhn_simulation[get_sigma_key()][info_set]["PASS"]   = 1-p
+    # Set the action probabilities
+    st.session_state.kuhn_simulation[get_sigma_key()][info_set]["BET"] = p
+    st.session_state.kuhn_simulation[get_sigma_key()][info_set]["PASS"] = 1-p
 
 
-### ---------------------------------------------------------------------------------------------------- ###
-### GAME FUNCTIONS
+### -------------------------------------------------- ###
+### --- GAME FUNCTIONS ------------------------------- ###
 
 
 def deal():
 
-    # deal cards
+    # Deal
     st.session_state.kuhn_game["hist"].append("The cards are dealt")
     node_n = st.session_state.kuhn_game["node"].deal_cards()
 
-    # make bot move if user is in position 2
+    # Make bot move if user is in position 2
     if node_n.player != st.session_state.game_user_:
-        a       = sample_action(node_n, st.session_state.kuhn_game["bot_sigma"])
-        node_n  = node_n.play(a)
+        a = sample_action(node_n, st.session_state.kuhn_game["bot_sigma"])
+        node_n = node_n.play(a)
         
-        # update game history
+        # Update game history
         st.session_state.kuhn_game["hist"].append(
             "Player {}: {}".format(3-st.session_state.game_user_, a)
         )
 
-    # update image path and game node
-    st.session_state.kuhn_game["img_path"]  = "assets/deals/{}.png".format(node_n.card_viz)
-    st.session_state.kuhn_game["node"]      = node_n
+    # Update image path and game node
+    st.session_state.kuhn_game["img_path"] = "assets/deals/{}.png".format(node_n.card_viz)
+    st.session_state.kuhn_game["node"] = node_n
 
 
 def move(*a):
 
-    # user move
-    node    = st.session_state.kuhn_game["node"]
-    a       = a[0]
-    node_n  = node.play(a)
+    # User move
+    node = st.session_state.kuhn_game["node"]
+    a = a[0]
+    node_n = node.play(a)
 
-    # update game history and node
+    # Update game history and node
     st.session_state.kuhn_game["hist"].append(
         "Player {}: {}".format(st.session_state.game_user_, a)
     )
     st.session_state.kuhn_game["node"] = node_n
 
-    # terminate round at terminal node
+    # Terminate round at terminal node
     if node_n.is_terminal():
         end_round()
     else:
 
-        # bot move
-        a       = sample_action(node_n, st.session_state.kuhn_game["bot_sigma"])
-        node_n  = node_n.play(a)
+        # Bot move
+        a = sample_action(node_n, st.session_state.kuhn_game["bot_sigma"])
+        node_n = node_n.play(a)
 
-        # update game history and node
+        # Update game history and node
         st.session_state.kuhn_game["hist"].append(
             "Player {}: {}".format(3-st.session_state.game_user_, a)
         )
         st.session_state.kuhn_game["node"] = node_n
 
-        # terminate round
+        # Terminate round
         if node_n.is_terminal():
             end_round()
 
 
 def end_round():
 
-    node        = st.session_state.kuhn_game["node"]
-    user_pos    = st.session_state.game_user_
+    node = st.session_state.kuhn_game["node"]
+    user_pos = st.session_state.game_user_
 
-    # update
+    # Update
     st.session_state.kuhn_game["rewards"][str(user_pos)].append(
         node.eval() if user_pos == 1 else -node.eval()
     )
@@ -176,14 +175,15 @@ def end_round():
 
 def reset_round():
 
-    # reset session state
-    st.session_state.kuhn_game["node"]      = RootNode(DEALINGS)
-    st.session_state.kuhn_game["img_path"]  = "assets/poker_table.png"
-    st.session_state.kuhn_game["hist"]      = []
+    # Reset session state
+    st.session_state.kuhn_game["node"] = RootNode(DEALINGS)
+    st.session_state.kuhn_game["img_path"] = "assets/poker_table.png"
+    st.session_state.kuhn_game["hist"] = []
 
 
 def reset_count():
-    # reset session state
+    
+    # Reset session state
     st.session_state.kuhn_game["rewards"] = {"1": [], "2": []}
 
 
@@ -195,33 +195,33 @@ def run_simulation():
 
     if st.session_state.kuhn_simulation["bot_freeze"]:
         
-        # initialize and train bot
+        # Initialize and train the bot
         bot = train_bot(
             st.session_state.kuhn_simulation["bot"],
             st.session_state.kuhn_simulation["n_rounds"],
         )
-        # compute and store ne
-        st.session_state.kuhn_simulation["bot_sigma"]   = bot.compute_ne()
-        # reset unfreezed bot ne to prevent it to be shown in next simulation results
-        st.session_state.kuhn_simulation["bot_ne"]      = dict()
+        # Compute the ne
+        st.session_state.kuhn_simulation["bot_sigma"] = bot.compute_ne()
+        # Reset unfreezed bot ne to prevent it to be shown in next simulation results
+        st.session_state.kuhn_simulation["bot_ne"] = dict()
 
         # simulate with freezed bot
         rewards = evaluate(
-            bot_sigma   = st.session_state.kuhn_simulation["bot_sigma"],
-            user        = st.session_state.kuhn_simulation["user"],
-            user_sigma  = st.session_state.kuhn_simulation[get_sigma_key()],
-            n_rounds    = st.session_state.kuhn_simulation["n_rounds"]
+            bot_sigma=st.session_state.kuhn_simulation["bot_sigma"],
+            user=st.session_state.kuhn_simulation["user"],
+            user_sigma=st.session_state.kuhn_simulation[get_sigma_key()],
+            n_rounds=st.session_state.kuhn_simulation["n_rounds"]
         )
     else:
 
-        # simulate with unfreezed bot and store ne
+        # Simulate with unfreezed bot and store ne
         rewards, bot_ne = simulate(
-            bot_type    = st.session_state.kuhn_simulation["bot"],
-            user        = st.session_state.kuhn_simulation["user"],
-            user_sigma  = st.session_state.kuhn_simulation[get_sigma_key()],
-            n_rounds    = st.session_state.kuhn_simulation["n_rounds"]
+            bot_type=st.session_state.kuhn_simulation["bot"],
+            user=st.session_state.kuhn_simulation["user"],
+            user_sigma=st.session_state.kuhn_simulation[get_sigma_key()],
+            n_rounds=st.session_state.kuhn_simulation["n_rounds"]
         )
         st.session_state.kuhn_simulation["bot_ne"] = bot_ne
 
-    # store rewards
+    # Store rewards
     st.session_state.kuhn_simulation["rewards"] = rewards
