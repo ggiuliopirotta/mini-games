@@ -2,8 +2,8 @@ import smtplib
 import streamlit as st
 
 
-### ---------------------------------------------------------------------------------------------------- ###
-### SEND
+### -------------------------------------------------- ###
+### --- SEND EMAIL ----------------------------------- ###
 
 
 def send_email(sender, body):
@@ -25,14 +25,13 @@ def send_email(sender, body):
         st.error(f"Some error occurred 🚫")
 
 
-### ---------------------------------------------------------------------------------------------------- ###
-### PAGE MARKDOWN
+### -------------------------------------------------- ###
+### --- PAGE MARKDOWN -------------------------------- ###
 
     
 st.markdown(
     '''
     # Send me a message 🦜
-
     ---
 
     Feel free to shoot me an email and I'll take a look 👀
@@ -40,25 +39,25 @@ st.markdown(
 )
 
 
-### ---------------------------------------------------------------------------------------------------- ###
-### INPUTS
+### -------------------------------------------------- ###
+### --- INPUTS  -------------------------------------- ###
 
 
 col, _ = st.columns((0.4, 0.6))
 
 with col:
     sender_ = st.text_input(
-        label   = "From",
-        value   = "Anonymus"
+        label="From",
+        value="Anonymus"
     )
 
 body_ = st.text_area(
-    label   = "Body",
-    value   = ""
+    label="Body",
+    value=""
 )
 
 send_ = st.button(
-    label       = "Send email",
-    on_click    = send_email,
-    args        = (sender_, body_)
+    label="Send email",
+    on_click=send_email,
+    args=(sender_, body_)
 )
