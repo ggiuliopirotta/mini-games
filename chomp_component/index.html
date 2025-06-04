@@ -1,0 +1,43 @@
+<html>
+  <head>
+    <script src="./streamlit-component-lib.js"></script>
+    <script src="./index.js"></script>
+    <style>
+      .chomp-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      .chomp-grid {
+        display: grid;
+        gap: 0;
+      }
+      .chomp-cell {
+        width: 40px;
+        height: 40px;
+        border: 1px solid #d3d6da;
+        border-radius: 6px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.5em;
+        background: #fff;
+        cursor: pointer;
+        user-select: none;
+      }
+      .chomp-cell.poison {
+        background: #ffcccc;
+      }
+      .chomp-cell.disabled {
+        background: #eee;
+        cursor: not-allowed;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="chomp-container" class="chomp-container">
+      <div id="chomp-grid" class="chomp-grid"></div>
+    </div>
+  </body>
+</html>
