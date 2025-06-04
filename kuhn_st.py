@@ -1,4 +1,4 @@
-from kuhn_fun import *
+from kuhn_utils import *
 from kuhn_game import RootNode, DEALINGS
 import streamlit as st
 
