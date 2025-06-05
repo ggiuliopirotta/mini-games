@@ -1,0 +1,62 @@
+<html>
+  <head>
+    <script src="./streamlit-component-lib.js"></script>
+    <script src="./index.js"></script>
+    <style>
+      .connect4-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+      .connect4-grid {
+        display: grid;
+        gap: 14px;
+        background: #0066cc;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      }
+      .connect4-cell {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #ffffff;
+        cursor: pointer;
+        user-select: none;
+        border: 2px solid #004499;
+        transition: all 0.2s ease;
+        position: relative;
+      }
+      .connect4-cell:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+      .connect4-cell.red {
+        background: #ff4444;
+      }
+      .connect4-cell.yellow {
+        background: #ffdd44;
+      }
+      .connect4-cell.disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+      .connect4-cell.disabled:hover {
+        transform: none;
+        box-shadow: none;
+      }
+      .connect4-cell.highlight {
+        box-shadow: 0 0 0 3px #00ff00;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="connect4-container" class="connect4-container">
+      <div id="connect4-grid" class="connect4-grid"></div>
+    </div>
+  </body>
+</html>
