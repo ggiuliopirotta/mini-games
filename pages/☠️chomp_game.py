@@ -88,10 +88,10 @@ user_ = st.radio(
 ### --- BOARD ---------------------------------------- ###
 
 
-clicked = render_chomp(n=n_rows_, m=n_cols_, available=st.session_state.chomp["game_state"].moves, game_on=game_on)
-if clicked:
-    row = clicked["row"]
-    col = clicked["col"]
+click = render_chomp(n=n_rows_, m=n_cols_, available=st.session_state.chomp["game_state"].moves, game_on=game_on)
+if click:
+    row = click["row"]
+    col = click["col"]
     move(row, col)
     st.rerun()
 

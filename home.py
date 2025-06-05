@@ -1,24 +1,24 @@
-from    kuhn_st import init_state
-import  streamlit as st
+from kuhn_st import init_state
+import streamlit as st
 
 
-### ---------------------------------------------------------------------------------------------------- ###
-### PAGE MARKDOWN
+### -------------------------------------------------- ###
+### --- PAGE MARKDOWN -------------------------------- ###
 
 
 st.set_page_config(
     page_title="Giulio's web app"
 )
 
+
 init_state()
 
-# welcome message
+
+# Welcome message
 st.markdown(
     '''
     # Welcome to My Web App 👋
-
     ---
-
     ### About
 
     I like solving games and that's why I created this web app.  
@@ -33,8 +33,5 @@ st.markdown(
     '''
 )
 
-# sidebar
-# in the sidebar all the games are displayed here
 with st.sidebar:
-
     my_page_ = st.button("Personal page 🧑‍💻")
