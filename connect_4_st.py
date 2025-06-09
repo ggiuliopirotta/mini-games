@@ -1,4 +1,4 @@
-from connect_4_minimax import *
+from connect_4_game import Connect4State
 import streamlit as st
 
 
