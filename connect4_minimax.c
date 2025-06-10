@@ -236,26 +236,26 @@ int main(int argc, char *argv[]) {
     init_board(&state);
 
     // Set the board state for debugging
-    // int preset[ROWS][COLS] = {
-    //     {1, 0, 1, 2, 2, 2, 1},
-    //     {1, 0, 1, 2, 2, 2, 0},
-    //     {1, 0, 0, 2, 2, 0, 0},
-    //     {2, 0, 0, 1, 1, 0, 0},
-    //     {1, 0, 0, 0, 0, 0, 0},
-    //     {0, 0, 0, 0, 0, 0, 0},
-    // };
-    // for (int r = 0; r < ROWS; r++) {
-    //     for (int c = 0; c < COLS; c++) {
-    //         state.board[r][c] = preset[r][c];
-    //     }
-    // }
-    // for (int c = 0; c < COLS; c++) {
-    //     int h = 0;
-    //     for (int r = 0; r < ROWS; r++) {
-    //         if (state.board[r][c] != NONE) h++;
-    //     }
-    //     state.heights[c] = h;
-    // }
+    int preset[ROWS][COLS] = {
+        {0, 0, 0, 1, 0, 0, 2},
+        {0, 0, 0, 2, 0, 0, 0},
+        {0, 0, 0, 1, 0, 0, 0},
+        {0, 0, 0, 2, 0, 0, 0},
+        {0, 0, 0, 1, 0, 0, 0},
+        {0, 0, 0, 0, 0, 0, 0},
+    };
+    for (int r = 0; r < ROWS; r++) {
+        for (int c = 0; c < COLS; c++) {
+            state.board[r][c] = preset[r][c];
+        }
+    }
+    for (int c = 0; c < COLS; c++) {
+        int h = 0;
+        for (int r = 0; r < ROWS; r++) {
+            if (state.board[r][c] != NONE) h++;
+        }
+        state.heights[c] = h;
+    }
     
     int me = P2;
     int p1_move;
