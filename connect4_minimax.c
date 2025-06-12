@@ -1,5 +1,6 @@
 #include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -9,105 +10,141 @@
 
 
 #define ROWS 6
+#define HEIGHT (ROWS+1)
 #define COLS 7
-#define NONE 0
-#define P1 1
-#define P2 2
 
 
 typedef struct {
-    int board[ROWS][COLS];
-    int heights[COLS];
-} GameState;
+    uint64_t position;  // Current player chips
+    uint64_t mask;      // All chips
+    int n_moves;
+} Board;
 
 
 // -------------------------------------------------- //
-// --- GAME FUNCTIONS ------------------------------- //
+// --- BITBOARD ------------------------------------- //
 
 
-bool is_valid_move(GameState *state, int col) {
-    return state->heights[col] < ROWS;
+/**
+ * Generate a bitmask representing the bottom row of the board.
+ * It looks like 00...0100000010...1...
+ *                     >------<>---<
+ *                         6+1   7
+ *               >----<>--------------<
+ *                 15         49
+ * Where the only 1s are evenly spaced every 7 bits.
+ */
+static inline uint64_t bottom_mask() {
+    uint64_t mask = 0;
+    for (int col = 0; col < COLS; col ++) {
+        // (1ULL << (col*HEIGHT)) shifts 1 by col*HEIGHT positions to get the 1st row of each column
+        // Then just take the or to set the bit
+        mask |= (1ULL << (col*HEIGHT));
+    }
+    return mask;
+}
+
+static inline uint64_t bottom_mask_col(int col) {
+    // Just take the first row of the column
+    return 1ULL << (col*HEIGHT);
+}
+
+/**
+ * Generate a bitmask representing all valid positions of the board.
+ * It looks like 00...0011111101..101..
+ *                     >-----<>---<
+ *                       6+1    7
+ *               >----<>--------------<
+ *                 15         49
+ * Where the 1s are the first 6 rows for each column.
+ */
+static inline uint64_t board_mask() {
+    // The binary multiplication by 0b(1ULL << HEIGHT)-1 = 63d turns any 1 into 111111
+    return bottom_mask() * ((1ULL << HEIGHT)-1);
+}
+
+static inline uint64_t top_mask_col(int col) {
+    // Just take the sixth row of the column
+    return 1ULL << (col*HEIGHT + ROWS-1);
+
+}
+ 
+static inline uint64_t col_mask(int col) {
+    // Just take the column bits
+    return ((1ULL << ROWS)-1) << (col*HEIGHT);
 }
 
 
-void undo_move(GameState *state, int col) {
-    if (state->heights[col] > 0) {
-        state->heights[col]--;
-        state->board[state->heights[col]][col] = NONE;
-    }
+// -------------------------------------------------- //
+// --- BOARD OPERATIONS ----------------------------- //
+
+
+void init_board(Board *board) {
+    board->position = 0;
+    board->mask = 0;
+    board->n_moves = 0;
 }
 
-
-void make_move(GameState *state, int col, int player) {
-    if (is_valid_move(state, col)) {
-        state->board[state->heights[col]][col] = player;
-        state->heights[col]++;
-    }
-}
-
-
-bool check_win(GameState *state, int player) {
-    for (int r = 0; r < ROWS; r++) {
-        for (int c = 0; c < COLS; c++) {
-            if (state->board[r][c] == player) {
-                // Horizontal
-                if (c+3 < COLS &&
-                    state->board[r][c+1] == player &&
-                    state->board[r][c+2] == player &&
-                    state->board[r][c+3] == player)
-                    return true;
-                // Vertical
-                if (r+3 < ROWS &&
-                    state->board[r+1][c] == player &&
-                    state->board[r+2][c] == player &&
-                    state->board[r+3][c] == player)
-                    return true;
-                // Diagonal (1st and 2nd)
-                if (r-3 >= 0 && c+3 < COLS &&
-                    state->board[r-1][c+1] == player &&
-                    state->board[r-2][c+2] == player &&
-                    state->board[r-3][c+3] == player)
-                    return true;
-                if (r+3 < ROWS && c+3 < COLS &&
-                    state->board[r+1][c+1] == player &&
-                    state->board[r+2][c+2] == player &&
-                    state->board[r+3][c+3] == player)
-                    return true;
-            }
-        }
-    }
+/**
+ * Check whether the current player is in a winning position.
+ * This is done in 3 phases:
+ *      1. Shift the board by 1 position and check that there are 2 consecutive 1-bits
+ *      2. Store the shifted bool board
+ *      3. Shift the board again by two positions and check that there are 3 consecutive pairs of 1-bits
+ *      => If so, there is a win
+ * 
+ * The process is repeated for each direction.
+ */
+bool check_win(uint64_t pos) {
+    
+    // Horizontal
+    uint64_t pos_shift = pos & (pos >> HEIGHT);
+    if(pos_shift & (pos_shift >> (2*HEIGHT))) return true;
+    
+    // 1st and 2nd diagonal
+    pos_shift = pos & (pos >> ROWS);
+    if(pos_shift & (pos_shift >> (2*ROWS))) return true;
+    pos_shift = pos & (pos >> (HEIGHT+1));
+    if(pos_shift & (pos_shift >> (2*(HEIGHT+1)))) return true;
+    
+    // Vertical
+    pos_shift = pos & (pos >> 1);
+    if(pos_shift & (pos_shift >> 2)) return true;
+    
     return false;
 }
 
+bool is_valid_move(Board *board, int col) {
+    // Check if the top row is free
+    return (board->mask & top_mask_col(col)) == 0;
+}
 
-bool check_immediate_win(GameState *state, int player) {
-    bool win = false;
+bool is_winning_move(Board *board, int col) {
+    // Check if the move yields an immediate win to the current player
+    uint64_t pos = board->position;
+    pos |= (board->mask + bottom_mask_col(col)) & col_mask(col);
+    return check_win(pos);
+}
 
-    for (int c = 0; c < COLS; c ++) {
-        if (is_valid_move(state, c)) {
-            make_move(state, c, player);
-            win = check_win(state, player);
-            undo_move(state, c);
+void make_move(Board *board, int col) {
+    // Switch the player
+    board->position ^= board->mask;
+    // Set the bottom row of the column to 1
+    board->mask |= board->mask + bottom_mask_col(col);
+    board->n_moves ++;
+}
 
-            if (win) return true;
-        }
-    }
-    return win;
+bool is_full(Board *board) {
+    return board->n_moves == ROWS*COLS;
 }
 
 
-bool is_full(GameState *state) {
-    for (int c = 0; c < COLS; c++) {
-        if (state->heights[c] < ROWS) {
-            return false;
-        }
-    }
-    return true;
-}
+// -------------------------------------------------- //
+// --- POSITION EVALUATION -------------------------- //
 
 
-bool is_terminal(GameState *state) {
-    return is_full(state) || check_win(state, 1) || check_win(state, 2);
+int evaluate_position(Board *board) {
+    return 0;
 }
 
 
@@ -115,109 +152,97 @@ bool is_terminal(GameState *state) {
 // --- MOVE ORDERING -------------------------------- //
 
 
+// First explore moves in the center
 static const int static_ordering[COLS] = {3, 2, 4, 1, 5, 0, 6};
-
-
-// -------------------------------------------------- //
-// --- UTILS ---------------------------------------- //
-
-
-void init_board(GameState *state) {
-    for (int c = 0; c < COLS; c++) {
-        for (int r = 0; r < ROWS; r++) {
-            state->board[r][c] = NONE;
-        }
-        state->heights[c] = 0;
-    }
-}
-
-
-void print_board(GameState *state) {
-    for (int r = ROWS-1; r >= 0; r--) {
-        for (int c = 0; c < COLS; c++) {
-            printf("%d ", state->board[r][c]);
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
 
 
 // -------------------------------------------------- //
 // --- MINIMAX ALGORITHM ---------------------------- //
 
 
-int negamax(
-    GameState *state,
-    int depth,
-    int player,
-    int alpha,
-    int beta
-) {
+int negamax(Board *board, int depth, int alpha, int beta) {
     
-    // Return evaluation at a terminal state
-    if (is_terminal(state)) {
-        if (check_win(state, 3-player)) {
-            return -(ROWS*COLS+1-depth);
-        }
-        return 0;
-    }
-    if (depth == 0) return 0;
+    // Return the evaluation at terminal state
+    if (depth == 0) return evaluate_position(board);
+    if (is_full(board)) return 0;
 
     // Check if there is an immediate win
-    if (check_immediate_win(state, player)) return (ROWS*COLS+1-depth);
-    
-    // Initialize the best eval
-    int best_eval = INT_MIN;
+    for (int col = 0; col < COLS; col++) {
+        if (is_valid_move(board, col) && is_winning_move(board, col)) {
+            return ROWS*COLS+1-board->n_moves;
+        }
+    }
 
-    // Loop
-    for (int i = 0; i < COLS; i++) {
-        int c = static_ordering[i];
-        if (is_valid_move(state, c)) {
-            make_move(state, c, player);
-            int eval = -negamax(state, depth-1, 3-player, -beta, -alpha);
-            undo_move(state, c);
-            
+    // Initialize
+    int best_eval = INT_MIN;
+    
+    // Loop over the columns
+    for (int idx = 0; idx < COLS; idx++) {
+        int col = static_ordering[idx];
+        if (is_valid_move(board, col)) {
+            Board child = *board;
+            make_move(&child, col);
+            int eval = -negamax(&child, depth-1, -beta, -alpha);
             best_eval = (eval > best_eval) ? eval : best_eval;
             alpha = (eval > alpha) ? eval : alpha;
-            if (beta <= alpha) break;
+            if (alpha >= beta) break;
         }
     }
     return best_eval;
 }
 
+int find_best_move(Board *board, int depth) {
 
-int find_best_move(GameState *state, int player, int depth) {
-
-    // Initialize the best move and eval
-    int best_move = -1;
-    int best_eval = INT_MIN;
-    int alpha = -(ROWS*COLS/2);
-    int beta = ROWS*COLS/2;
-
-    if (player == P2) {
-        alpha *= -1;
-        beta *= -1;
+    // Check if there is an immediate win
+    for (int col = 0; col < COLS; col++) {
+        if (is_valid_move(board, col) && is_winning_move(board, col)) {
+            return col;
+        }
     }
 
-    // Loop
-    for (int i = 0; i < COLS; i++) {
-        int c = static_ordering[i];
-        if (is_valid_move(state, c)) {
-            make_move(state, c, player);
-            int eval = -negamax(state, depth-1, 3-player, -beta, -alpha);
-            undo_move(state, c);
+    // Initialize
+    int best_move = -1;
+    int best_eval = INT_MIN;
+    int alpha = INT_MIN;
+    int beta = INT_MAX;
+
+    // Loop over the columns
+    for (int idx = 0; idx < COLS; idx++) {
+        int col = static_ordering[idx];
+        if (is_valid_move(board, col)) {
+            Board child = *board;
+            make_move(&child, col);
+            int eval = -negamax(&child, depth-1, -beta, -alpha);
 
             if (eval > best_eval) {
                 best_eval = eval;
-                best_move = c;
+                best_move = col;
             }
             alpha = (eval > alpha) ? eval : alpha;
-            if (beta <= alpha) break;
-
+            if (alpha >= beta) break;
         }
     }
     return best_move;
+}
+
+
+// -------------------------------------------------- //
+// --- PRINT ---------------------------------------- //
+
+
+void print_board(Board *board) {
+    for (int row = ROWS-1; row >= 0; row--) {
+        for (int col = 0; col < COLS; col++) {
+            uint64_t idx = 1ULL << (col*HEIGHT + row);
+            if (board->mask & idx) {
+                printf("%c ", (board->position & idx) ? 'x' : 'o');
+            } else {
+                printf(". ");
+            }
+        }
+        printf("\n");
+    }
+    printf("\n");
 }
 
 
@@ -232,64 +257,41 @@ int main(int argc, char *argv[]) {
     }
     int depth = atoi(argv[1]);
 
-    GameState state;
-    init_board(&state);
-
-    // Set the board state for debugging
-    int preset[ROWS][COLS] = {
-        {0, 0, 0, 1, 0, 0, 2},
-        {0, 0, 0, 2, 0, 0, 0},
-        {0, 0, 0, 1, 0, 0, 0},
-        {0, 0, 0, 2, 0, 0, 0},
-        {0, 0, 0, 1, 0, 0, 0},
-        {0, 0, 0, 0, 0, 0, 0},
-    };
-    for (int r = 0; r < ROWS; r++) {
-        for (int c = 0; c < COLS; c++) {
-            state.board[r][c] = preset[r][c];
-        }
-    }
-    for (int c = 0; c < COLS; c++) {
-        int h = 0;
-        for (int r = 0; r < ROWS; r++) {
-            if (state.board[r][c] != NONE) h++;
-        }
-        state.heights[c] = h;
-    }
-    
-    int me = P2;
+    Board board;
+    init_board(&board);
     int p1_move;
     int p2_move;
 
     while (true) {
         
-        p1_move = find_best_move(&state, P1, depth);
-        make_move(&state, p1_move, P1);
-        if (check_win(&state, P1)) {
-            print_board(&state);
+        p1_move = find_best_move(&board, depth);
+        make_move(&board, p1_move);
+        if (check_win(board.position ^ board.mask)) {
+            print_board(&board);
             printf("P1 wins!\n");
             break;
         }
         
-        print_board(&state);
+        print_board(&board);
         printf("P2 -> Enter column (0-6): ");
         scanf("%d", &p2_move);
-        if (!is_valid_move(&state, p2_move)) {
+        if (!is_valid_move(&board, p2_move)) {
             printf("Invalid move.\n");
             continue;
         }
-        make_move(&state, p2_move, P2);
+        make_move(&board, p2_move);
 
-        if (check_win(&state, P2)) {
-            print_board(&state);
+        if (check_win(board.position ^ board.mask)) {
+            print_board(&board);
             printf("P2 wins!\n");
             break;
         }
     
-        if (is_full(&state)) {
-            print_board(&state);
+        if (is_full(&board)) {
+            print_board(&board);
             printf("It's a draw!\n");
             break;
         }
     }
+    return 0;
 }
