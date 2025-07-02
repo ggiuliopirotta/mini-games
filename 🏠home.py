@@ -32,6 +32,9 @@ st.markdown(
     - **Chomp**
     
     All of them can be accessed from the sidebar. Have fun!
+
+    **Note**: If you experience issues with any page, first try come back here and then re-enter the page.  
+    If the problem persists, please report it to me via the contact form.
     """
 )
 
