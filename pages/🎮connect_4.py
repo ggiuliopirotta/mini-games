@@ -32,7 +32,9 @@ with st.expander("Tip"):
 
 st.markdown(
     """
-    **Note**: The CPU is not yet optimized, so you have a chance to win against it!
+    **Note**: The CPU is not yet optimized, so you have a chance to win against it!  
+    Also, the bot might take a while to make its move, so once you click a cell and see the engine running,  
+    be patient and stand by until the board is updated!
     
     ---
     ### Settings
