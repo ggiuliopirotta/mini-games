@@ -142,10 +142,11 @@ def get_bot_move(position):
         return openings[position]
 
     exe_path = os.path.join(os.getcwd(), "src", "c4", "c4_solver")
-    system = platform.system().lower()
-    exe_path = exe_path.rsplit(".", 1)[0] if ".exe" in exe_path else exe_path
-    command = ["wine", exe_path] if system != "windows" else [exe_path]
-    command.extend([position])
+    # system = platform.system().lower()
+    # exe_path = exe_path.rsplit(".", 1)[0] if ".exe" in exe_path else exe_path
+    # command = ["wine", exe_path] if system != "windows" else [exe_path]
+    # command.extend([position])
+    command = [exe_path, position]
 
     try:
         result = subprocess.run(
