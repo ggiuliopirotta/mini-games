@@ -146,36 +146,50 @@ def get_bot_move(position):
     # exe_path = exe_path.rsplit(".", 1)[0] if ".exe" in exe_path else exe_path
     # command = ["wine", exe_path] if system != "windows" else [exe_path]
     # command.extend([position])
+    command = [exe_path, position]
+    st.write("Trying command:", command)
 
     try:
         os.chmod(exe_path, 0o755)
     except:
         pass
-    command = [os.path.basename(exe_path), position]
-    st.write(f"Running command: {command}")
-    st.write(f"Current working directory: {os.path.dirname(exe_path)}")
     try:
         result = subprocess.run(
             command,
-            cwd=os.path.dirname(exe_path),
             capture_output=True,
             text=True,
             check=True,
         )
-        if result.returncode != 0:
-            st.error("Error while getting bot move. Please retry.")
-            return None
-        move_col = int(result.stdout.strip())
+        st.write("STDOUT:", result.stdout)
+        st.write("STDERR:", result.stderr)
+    except subprocess.CalledProcessError as e:
+        st.error(f"Subprocess failed with code {e.returncode}")
+        st.error(f"STDERR:\n{e.stderr}")
 
-        # Save this move to the openings and update the file
-        if len(position) < 5:
-            openings[position] = move_col
-            save_openings(openings)
+    # st.write(f"Running command: {command}")
+    # st.write(f"Current working directory: {os.path.dirname(exe_path)}")
+    # try:
+    #     result = subprocess.run(
+    #         command,
+    #         cwd=os.path.dirname(exe_path),
+    #         capture_output=True,
+    #         text=True,
+    #         check=True,
+    #     )
+    #     if result.returncode != 0:
+    #         st.error("Error while getting bot move. Please retry.")
+    #         return None
+    #     move_col = int(result.stdout.strip())
 
-        return move_col
-    except Exception as e:
-        st.error("Bot move failed: " + str(e))
-        return None
+    #     # Save this move to the openings and update the file
+    #     if len(position) < 5:
+    #         openings[position] = move_col
+    #         save_openings(openings)
+
+    #     return move_col
+    # except Exception as e:
+    #     st.error("Bot move failed: " + str(e))
+    #     return None
 
 
 def terminate_game(status):
