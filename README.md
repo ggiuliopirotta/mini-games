@@ -1,3 +1,3 @@
 # Web-App
 
-This is my personal web app
+This is my personal web application.
