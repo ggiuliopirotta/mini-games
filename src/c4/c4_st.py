@@ -151,11 +151,12 @@ def get_bot_move(position):
         os.chmod(exe_path, 0o755)
     except:
         pass
-    command = [exe_path, position]
+    command = [os.path.basename(exe_path), position]
 
     try:
         result = subprocess.run(
             command,
+            cwd=os.path.dirname(exe_path),
             capture_output=True,
             text=True,
             check=True,
