@@ -152,7 +152,8 @@ def get_bot_move(position):
     except:
         pass
     command = [os.path.basename(exe_path), position]
-
+    st.write(f"Running command: {command}")
+    st.write(f"Current working directory: {os.path.dirname(exe_path)}")
     try:
         result = subprocess.run(
             command,
