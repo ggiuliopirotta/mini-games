@@ -10,8 +10,12 @@ KUHN_ACTIONS = ["BET", "PASS"]
 CARDS = ["J", "Q", "K"]
 DEALINGS = ["JQ", "JK", "QJ", "QK", "KJ", "KQ"]
 MAP_REWARDS = {
-    "JQ" : -1, "JK" : -1, "QK" : -1,
-    "QJ" : +1, "KJ" : +1, "KQ" : +1,
+    "JQ": -1,
+    "JK": -1,
+    "QK": -1,
+    "QJ": +1,
+    "KJ": +1,
+    "KQ": +1,
 }
 
 PLAYERS = ["CHANCE", "1", "2"]
@@ -29,20 +33,20 @@ class Node:
         self.player = player
         self.actions = actions
 
-
     def play(self, action):
+        """Play an action at the current node."""
         # Return a child according to the action
         return self.children[action]
 
-
-    def is_root(self):
-        # Check if root node
-        return len(self.children) == 6
-
-
     def is_terminal(self):
+        """Check if the current node is a terminal node."""
         # check If terminal node
         return len(self.children) == 0
+
+    def is_root(self):
+        """Check if the current node is the root."""
+        # Check if root node
+        return len(self.children) == 6
 
 
 class RootNode(Node):
@@ -53,19 +57,16 @@ class RootNode(Node):
         # Populate and store the node children
         self.children = {
             deal: GameNode(
-                parent=self,
-                player=1,
-                cards=deal,
-                hist=[],
-                actions=KUHN_ACTIONS
-            ) for deal in dealings
+                parent=self, player=1, cards=deal, hist=[], actions=KUHN_ACTIONS
+            )
+            for deal in dealings
         }
 
         # Define the information set at the root node
         self.info_set = "."
 
-
     def deal_cards(self):
+        """Deal cards by sampling from the dealings."""
         # Sample possible dealing
         self.deal = np.random.choice(list(self.children.values()))
         return self.deal
@@ -86,8 +87,9 @@ class GameNode(Node):
                 player=2 if player == 1 else 1,
                 cards=cards,
                 hist=hist + [a],
-                actions=self.get_next_node_actions(a)
-            ) for a in actions
+                actions=self.get_next_node_actions(a),
+            )
+            for a in actions
         }
 
         # Set a sentinel value for the player at terminal state
@@ -96,7 +98,7 @@ class GameNode(Node):
 
         # Define the visible card to current player
         # Show both at terminal state
-        self.card_viz = cards[self.player-1] if not self.is_terminal() else cards
+        self.card_viz = cards[self.player - 1] if not self.is_terminal() else cards
 
         # Define information set of the game node
         # Each set is identified by player, card, and history
@@ -104,15 +106,20 @@ class GameNode(Node):
             self.player, self.card_viz, "-".join(hist)
         ) + ("-." if len(hist) != 0 else ".")
 
-
     def __str__(self):
         s = "-> GAME NODE <-\nplayer\t : {}\ninfo_set : {}\nhist\t : {}\nactions\t : {}\n".format(
             self.player, self.info_set, self.hist, self.actions
         )
         return s
 
-
     def get_next_node_actions(self, a):
+        """
+        Get the next node actions based on the current action and history.
+
+        :param a: The action taken at the current node.
+
+        :return: A list of available actions for the next node.
+        """
 
         # At stage 0 and 1 all actions are available
         if len(self.hist) == 0:
@@ -127,8 +134,8 @@ class GameNode(Node):
         else:
             return []
 
-
     def eval(self):
+        """Evaluate the utility of the current game node."""
 
         # Handle evaluation at a non-terminal node
         if not self.is_terminal():
@@ -138,9 +145,9 @@ class GameNode(Node):
         # Map cards to rewards and handle non-standard cases
         # Double the rewards if both players bet and opposite if player 1 passes
         if self.hist[-2] == "BET" and self.hist[-1] == "BET":
-            u = MAP_REWARDS[self.cards]*2
+            u = MAP_REWARDS[self.cards] * 2
         elif self.hist[-2] == "BET":
-            u = (1 if len(self.hist) == 2 else -1)
+            u = 1 if len(self.hist) == 2 else -1
         elif self.hist[-1] == "BET":
             u = -1
         else:

@@ -119,13 +119,6 @@ bool is_valid_move(Board *board, int col) {
     return (board->mask & top_mask_col(col)) == 0;
 }
 
-bool is_winning_move(Board *board, int col) {
-    // Check if the move yields an immediate win to the current player
-    uint64_t pos = board->position;
-    pos |= (board->mask + bottom_mask_col(col)) & col_mask(col);
-    return check_win(pos);
-}
-
 void make_move(Board *board, int col) {
     // Switch the player
     board->position ^= board->mask;
@@ -145,6 +138,20 @@ bool is_full(Board *board) {
 
 int evaluate_position(Board *board) {
     return 0;
+}
+
+bool is_winning_move(Board *board, int col) {
+    // Check if the move yields an immediate win for the current player
+    uint64_t pos = board->position;
+    pos |= (board->mask + bottom_mask_col(col)) & col_mask(col);
+    return check_win(pos);
+}
+
+bool is_losing_move(Board *board, int col) {
+    // Check if the move yields an immediate loss
+    uint64_t pos = board->position ^ board->mask;
+    pos |= (board->mask + bottom_mask_col(col)) & col_mask(col);
+    return check_win(pos);
 }
 
 
@@ -169,7 +176,7 @@ int negamax(Board *board, int depth, int alpha, int beta) {
     // Check if there is an immediate win
     for (int col = 0; col < COLS; col++) {
         if (is_valid_move(board, col) && is_winning_move(board, col)) {
-            return ROWS*COLS+1-board->n_moves;
+            return (ROWS*COLS+1-board->n_moves) / 2;
         }
     }
 
@@ -179,10 +186,11 @@ int negamax(Board *board, int depth, int alpha, int beta) {
     // Loop over the columns
     for (int idx = 0; idx < COLS; idx++) {
         int col = static_ordering[idx];
-        if (is_valid_move(board, col)) {
+        if (is_valid_move(board, col) && !is_losing_move(board, col)) {
             Board child = *board;
             make_move(&child, col);
             int eval = -negamax(&child, depth-1, -beta, -alpha);
+            // Update the best evaluation
             best_eval = (eval > best_eval) ? eval : best_eval;
             alpha = (eval > alpha) ? eval : alpha;
             if (alpha >= beta) break;
@@ -213,7 +221,7 @@ int find_best_move(Board *board, int depth) {
             Board child = *board;
             make_move(&child, col);
             int eval = -negamax(&child, depth-1, -beta, -alpha);
-
+            // Update the best move and evaluation
             if (eval > best_eval) {
                 best_eval = eval;
                 best_move = col;
@@ -252,46 +260,30 @@ void print_board(Board *board) {
 
 int main(int argc, char *argv[]) {
     if (argc < 2) {
-        printf("Usage: %s <depth>\n", argv[0]);
+        printf("Usage: %s <depth> [position_string]\n", argv[0]);
         return 1;
     }
     int depth = atoi(argv[1]);
+    char *pos_str = NULL;
+    if (argc >= 3) pos_str = argv[2];
 
+    // Initialize the board
     Board board;
     init_board(&board);
-    int p1_move;
-    int p2_move;
 
-    while (true) {
-        
-        p1_move = find_best_move(&board, depth);
-        make_move(&board, p1_move);
-        if (check_win(board.position ^ board.mask)) {
-            print_board(&board);
-            printf("P1 wins!\n");
-            break;
-        }
-        
-        print_board(&board);
-        printf("P2 -> Enter column (0-6): ");
-        scanf("%d", &p2_move);
-        if (!is_valid_move(&board, p2_move)) {
-            printf("Invalid move.\n");
-            continue;
-        }
-        make_move(&board, p2_move);
-
-        if (check_win(board.position ^ board.mask)) {
-            print_board(&board);
-            printf("P2 wins!\n");
-            break;
-        }
-    
-        if (is_full(&board)) {
-            print_board(&board);
-            printf("It's a draw!\n");
-            break;
+    // Parse position string and play moves in order
+    if (pos_str) {
+        for (int i = 0; pos_str[i] != '\0'; ++i) {
+            int col = (pos_str[i]-'0') - 1;
+            if (col < 0 || col >= COLS || !is_valid_move(&board, col)) {
+                printf("Invalid move detected at char %d ('%c')\n", i, pos_str[i]);
+                return 1;
+            }
+            make_move(&board, col);
         }
     }
+
+    int move = find_best_move(&board, depth);
+    printf("%d", move+1);
     return 0;
 }

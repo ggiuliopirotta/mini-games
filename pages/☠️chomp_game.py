@@ -1,5 +1,5 @@
-from chomp_component import render_chomp
-from chomp_st import *
+from components.chomp import render_chomp
+from src.chomp.chomp_st import *
 import streamlit as st
 
 
@@ -8,7 +8,7 @@ import streamlit as st
 
 
 st.markdown(
-    '''
+    """
     # Chomp Game ☠️
     ---
     ### Rules
@@ -18,23 +18,23 @@ st.markdown(
 
     Unfortunately, the top-left piece of chocolate is poisoned, so whoever eats it loses the game.  
     Hence, each player should try to force the opponent to eat the poisoned piece.
-    '''
+    """
 )
 
 with st.expander("Tip"):
     st.markdown(
-        '''
+        """
         Player 1 has always a winning strategy, while player 2 must hope for an opponent's mistake to win, so choose your position accordingly!
-        '''
+        """
     )
 
 st.markdown(
-    '''
+    """
     ---
     ### Settings
 
     Choose the size of the board and your position in the game.
-    '''
+    """
 )
 
 
@@ -52,12 +52,12 @@ with cols[0]:
         key="chomp_n_rows_",
         label="Board rows",
         min_value=2,
-        max_value=7,
+        max_value=4,
         step=1,
         value=st.session_state.chomp["n_rows"],
         disabled=game_on or not end_status is None,
         on_change=set_chomp_state,
-        args=("n_rows", "chomp_n_rows_")
+        args=("n_rows", "chomp_n_rows_"),
     )
 
 with cols[1]:
@@ -65,22 +65,22 @@ with cols[1]:
         key="chomp_n_cols_",
         label="Board columns",
         min_value=2,
-        max_value=7,
+        max_value=6,
         step=1,
         value=st.session_state.chomp["n_cols"],
         disabled=game_on or not end_status is None,
         on_change=set_chomp_state,
-        args=("n_cols", "chomp_n_cols_")
+        args=("n_cols", "chomp_n_cols_"),
     )
 
 user_ = st.radio(
     key="chomp_user_",
     label="User position",
-    options=["1", "2"],
-    index=int(st.session_state.chomp["user"])-1,
+    options=[1, 2],
+    index=st.session_state.chomp["user"] - 1,
     disabled=game_on or not end_status is None,
     on_change=set_chomp_state,
-    args=("user", "chomp_user_")
+    args=("user", "chomp_user_"),
 )
 
 
@@ -88,7 +88,12 @@ user_ = st.radio(
 ### --- BOARD ---------------------------------------- ###
 
 
-click = render_chomp(n=n_rows_, m=n_cols_, available=st.session_state.chomp["game_state"].moves, game_on=game_on)
+click = render_chomp(
+    n=n_rows_,
+    m=n_cols_,
+    available=st.session_state.chomp["game_state"].moves,
+    game_on=game_on,
+)
 if click:
     row = click["row"]
     col = click["col"]
@@ -116,7 +121,7 @@ with cols[1]:
         label="Resign",
         disabled=not game_on,
         on_click=end_game,
-        args=("quit",)
+        args=("quit",),
     )
 
 with cols[2]:

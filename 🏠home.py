@@ -1,4 +1,6 @@
-from kuhn_st import init_state
+from src.chomp.chomp_st import init_chomp_state
+from src.c4.c4_st import init_connect4_state
+from src.kuhn.kuhn_st import init_kuhn_state
 import streamlit as st
 
 
@@ -6,17 +8,17 @@ import streamlit as st
 ### --- PAGE MARKDOWN -------------------------------- ###
 
 
-st.set_page_config(
-    page_title="Giulio's web app"
-)
+st.set_page_config(page_title="Giulio's web app")
 
 
-init_state()
+init_chomp_state()
+init_connect4_state()
+init_kuhn_state()
 
 
 # Welcome message
 st.markdown(
-    '''
+    """
     # Welcome to My Web App 👋
     ---
     ### About
@@ -30,8 +32,15 @@ st.markdown(
     - **Chomp**
     
     All of them can be accessed from the sidebar. Have fun!
-    '''
+    """
 )
 
 with st.sidebar:
-    my_page_ = st.button("Personal page 🧑‍💻")
+    st.markdown(
+        """
+        <a href="https://ggiuliopirotta.github.io/">
+            <button style="width:100%">Personal page 🧑‍💻</button>
+        </a>
+        """,
+        unsafe_allow_html=True,
+    )

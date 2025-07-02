@@ -2,9 +2,9 @@ import os
 import streamlit.components.v1 as components
 
 _component_func = components.declare_component(
-    "chomp_component",
-    path=os.path.dirname(__file__)
+    "chomp_component", path=os.path.dirname(__file__)
 )
+
 
 def render_chomp(n, m, available, game_on=True):
     """
@@ -17,11 +17,5 @@ def render_chomp(n, m, available, game_on=True):
     :return: dict
     """
     return _component_func(
-        spec={
-            "n"         : n,
-            "m"         : m,
-            "available" : available,
-            "game_on"   : game_on
-        },
-        default=None
+        spec={"n": n, "m": m, "available": available, "game_on": game_on}, default=None
     )

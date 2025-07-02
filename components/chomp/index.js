@@ -51,7 +51,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, (event) => {
     renderGrid(event.detail.args.spec);
-    Streamlit.setFrameHeight(50 + 45 * (event.detail.args.spec.n || 2));
+  const n = event.detail.args.spec.n || 2;
+  const frameHeight = 20 + 35 * n + 20;
+  Streamlit.setFrameHeight(frameHeight);
   });
 
   Streamlit.setComponentReady();

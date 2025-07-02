@@ -1,5 +1,5 @@
-from connect4_component import render_connect4
-from connect_4_st import *
+from components.c4 import render_connect4
+from src.c4.c4_st import *
 import streamlit as st
 import numpy as np
 
@@ -9,7 +9,7 @@ import numpy as np
 
 
 st.markdown(
-    '''
+    """
     # Connect 4 in a row 🎮
     ---
     ### Rules
@@ -20,36 +20,39 @@ st.markdown(
 
     The scope of the game is to be the first to connect 4 discs together either in a row, column or diagonal.
     Hence, each player should form his line while preventing his opponent from doing the same.
-    '''
+    """
 )
 
 with st.expander("Tip"):
     st.markdown(
-        '''
+        """
         Player 1 has always a winning strategy, while player 2 must hope for an opponent's mistake to win, so choose your position accordingly!
-        '''
+        """
     )
 
 st.markdown(
-    '''
+    """
+    **Note**: The CPU is not yet optimized, so you have a chance to win against it!
+    
     ---
     ### Settings
     
     Choose your position in the game.
-    '''
+    """
 )
 
 game_on = st.session_state.connect4["game_on"]
-end_status = st.session_state.connect4["end_game"]
+end_status = st.session_state.connect4["end_status"]
+
 
 user_ = st.radio(
     key="connect4_user_",
     label="User position",
-    options=["1", "2"],
-    index=int(st.session_state.connect4["user"])-1,
+    options=[1, 2],
+    index=st.session_state.connect4["user"] - 1,
     disabled=game_on or not end_status is None,
     on_change=set_connect4_state,
-    args=("user", "connect4_user_")
+    args=("user", "connect4_user_"),
 )
 
 
@@ -60,8 +63,8 @@ user_ = st.radio(
 # Flip the board vertically before rendering
 flipped_board = np.flipud(st.session_state.connect4["game_state"].board).tolist()
 click = render_connect4(grid=flipped_board, game_on=game_on)
-if click and 'column' in click:
-    column = click['column']
+if click and "column" in click:
+    column = click["column"]
     move(column)
     st.rerun()
 
@@ -69,13 +72,6 @@ if click and 'column' in click:
 ### -------------------------------------------------- ###
 ### --- GAME BUTTONS --------------------------------- ###
 
-
-st.markdown(
-    '''
-    Choose a column to place your disc.  
-    Notice that the columns are indexed at 0, meaning that 0 stands for the first column etc...
-    '''
-)
 
 cols = st.columns((0.12, 0.15, 0.14, 0.84))
 
@@ -92,8 +88,8 @@ with cols[1]:
         key="connect4_resign_",
         label="Resign",
         disabled=not game_on,
-        on_click=end_game,
-        args=("quit",)
+        on_click=terminate_game,
+        args=("quit",),
     )
 
 with cols[2]:
@@ -109,12 +105,9 @@ with cols[2]:
 ### --- RESULTS -------------------------------------- ###
 
 
-st.markdown("Game stages (coordinates are indexed at 0):")
-st.write(st.session_state.connect4["game_hist"])
-
 if end_status is not None:
 
-    if end_status == "game over":
+    if end_status == "bot wins":
         st.error("You lost against the bot 💩")
     if end_status == "quit":
         st.warning("You resigned 🎈")

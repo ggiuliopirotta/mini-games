@@ -1,5 +1,4 @@
 import numpy as np
-# import pickle
 
 
 class Connect4State:
@@ -10,9 +9,12 @@ class Connect4State:
         self.n_rows = n_rows
         self.n_cols = n_cols
         # Get board configuration from parent node if it is not the root node
-        self.board = board if board is not None else np.zeros((self.n_rows, self.n_cols), dtype=int)
+        self.board = (
+            board
+            if board is not None
+            else np.zeros((self.n_rows, self.n_cols), dtype=int)
+        )
 
-    
     def __str__(self):
 
         s = ""
@@ -26,59 +28,71 @@ class Connect4State:
         s = s[:-1]
 
         return s
-    
 
     def add_disc(self, idx_c, player):
+        """
+        Add a disc to the board in the specified column for the given player.
+
+        :param idx_c: Index of the column
+        :param player: Player number (1 or 2)
+
+        :return: New Connect4State
+        """
 
         # Create a new board and add a disc to the chosen column
         board_n = self.board.copy()
-        idx_r = np.argmax(self.board[:, idx_c] == 0) if np.sum(self.board[:, idx_c] > 0) else 0
+        idx_r = (
+            np.argmax(self.board[:, idx_c] == 0)
+            if np.sum(self.board[:, idx_c] > 0)
+            else 0
+        )
         board_n[idx_r, idx_c] = player
 
         # Return the new state
         # Storing all children for all states would be too memory-intensive and with redundant information
         # This is not properly a tree, but it acts as such
-        return Connect4State(
-            n_rows=self.n_rows,
-            n_cols=self.n_cols,
-            board=board_n
-        )
+        return Connect4State(n_rows=self.n_rows, n_cols=self.n_cols, board=board_n)
 
+    def check_win(self, player):
+        """
+        Check if the specified player has a winning alignment of 4 discs.
 
-    def check_alignments(self, player):
+        :param player: Player number (1 or 2)
+        :return: True if the player has won, False otherwise
+        """
 
         n_rows, n_cols = self.n_rows, self.n_cols
 
         # Check horizontal alignments
         for row in range(n_rows):
-            for col in range(n_cols-3):
-                if np.all(self.board[row, col:col+4] == player):
+            for col in range(n_cols - 3):
+                if np.all(self.board[row, col : col + 4] == player):
                     return True
 
         # Check vertical alignments
         for col in range(n_cols):
-            for row in range(n_rows-3):
-                if np.all(self.board[row:row+4, col] == player):
+            for row in range(n_rows - 3):
+                if np.all(self.board[row : row + 4, col] == player):
                     return True
 
         # Check main diagonals
-        for row in range(n_rows-3):
-            for col in range(n_cols-3):
-                if np.all([self.board[row+i, col+i] == player for i in range(4)]):
+        for row in range(n_rows - 3):
+            for col in range(n_cols - 3):
+                if all(self.board[row + i, col + i] == player for i in range(4)):
                     return True
 
         # Check secondary diagonals
         for row in range(3, n_rows):
-            for col in range(n_cols-3):
-                if np.all([self.board[row-i, col+i] == player for i in range(4)]):
+            for col in range(n_cols - 3):
+                if all(self.board[row - i, col + i] == player for i in range(4)):
                     return True
 
         return False
 
-    
     def is_full(self):
+        """Check if the board is full (no empty cells)."""
         return not np.any(self.board == 0)
-    
 
-    def is_terminal(self):
-        return self.check_alignments(4, 1) or self.is_full() or self.check_alignments(4, 2)
+    def is_root(self):
+        """Check if the board is empty."""
+        return np.all(self.board == 0)
